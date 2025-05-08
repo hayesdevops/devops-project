@@ -1,0 +1,125 @@
+name: Infrastructure Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Run Security Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+          output_format: github_failed_only
+
+  deploy-shared:
+    name: Deploy Shared Services
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: shared
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        
+      - name: Deploy Shared Infrastructure
+        run: |
+          terraform init
+          terraform workspace select shared
+          terraform apply -auto-approve -target=module.aws_shared_network
+
+  deploy-prod:
+    name: Deploy Production
+    needs: deploy-shared
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - name: Configure Azure Credentials
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        
+      - name: Deploy Production Infrastructure
+        run: |
+          terraform init
+          terraform workspace select prod
+          terraform apply -auto-approve
+
+      - name: Verify Deployment
+        run: |
+          terraform output -json > deployment.json
+          
+      - name: Create Release Summary
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const deployData = JSON.parse(fs.readFileSync('deployment.json', 'utf8'));
+            
+            const summary = `
+            ## Release Deployment Summary
+            
+            🚀 Release: ${process.env.GITHUB_REF_NAME}
+            ✅ Status: Success
+            
+            ### Infrastructure Changes
+            - Shared Services Network: Updated
+            - Production Network: Updated
+            - Container Services: Deployed
+            
+            ### Outputs
+            \`\`\`json
+            ${JSON.stringify(deployData, null, 2)}
+            \`\`\`
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Deployment Summary: ${process.env.GITHUB_REF_NAME}`,
+              body: summary,
+              labels: ['deployment']
+            });
+```
+
