@@ -43,6 +43,10 @@ module "azure_network" {
   aws_transit_gateway_vpn_ip = module.aws_shared_network.vpn_endpoint_ip
   aws_address_space          = module.aws_prod_network.vpc_cidr
   vpn_shared_key             = data.aws_secretsmanager_secret_version.vpn_key.secret_string
+
+  environment = var.environment
+  cost_center = var.cost_center
+  owner       = var.owner
 }
 
 module "aws_container" {

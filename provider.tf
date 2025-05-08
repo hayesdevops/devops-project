@@ -1,7 +1,8 @@
 terraform {
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
+      version = "~> 4.0"  # Add version constraint
     }
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -14,15 +15,19 @@ provider "aws" {
   region = "us-west-2"
 }
 
+provider "aws" {
+  alias  = "backend"
+  region = "us-west-2"
+}
 
 provider "aws" {
   alias  = "shared"
   region = "us-west-2"
 }
+
 provider "aws" {
   alias  = "prod"
-  region = "us-west-2" # or your desired region
-
+  region = "us-west-2"
 }
 
 provider "azurerm" {

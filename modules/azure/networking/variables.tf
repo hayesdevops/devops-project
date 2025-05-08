@@ -76,3 +76,13 @@ variable "vpn_type" {
   type        = string
   default     = "RouteBased"
 }
+
+variable "cost_center" {
+  type        = string
+  description = "Cost center code for billing"
+}
+
+variable "owner" {
+  type        = string
+  description = "Team/Individual responsible for the resource"
+}

@@ -38,6 +38,24 @@ variable "service_tier" {
   }
 }
 
+variable "environment" {
+  type        = string
+  description = "Deployment environment"
+  validation {
+    condition     = contains(["dev", "staging", "prod", "shared"], var.environment)
+    error_message = "Environment must be one of: dev, staging, prod, shared."
+  }
+}
+
+variable "container_registry" {
+  type        = string
+  description = "Container registry URL"
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9-_./]*$", var.container_registry))
+    error_message = "Container registry must be a valid URL."
+  }
+}
+
 locals {
   container_tags = merge(
     var.resource_tags,

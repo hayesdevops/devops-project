@@ -2,8 +2,8 @@ resource "azurerm_virtual_network" "this" {
   name                = "${var.environment}-vnet"
   address_space       = [var.vnet_address_space]
   location            = var.location
-  resource_group_name = azurerm_resource_group.networking.id
-  tags     = local.common_tags
+  resource_group_name = azurerm_resource_group.networking.name 
+  tags                = local.common_tags
 }
 
 resource "azurerm_subnet" "container" {

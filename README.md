@@ -190,6 +190,144 @@ Required Secrets:
 - AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY: AWS credentials
 - AZURE_CLIENT_ID/SECRET/SUBSCRIPTION_ID/TENANT_ID: Azure auth
 
+## State Management
+
+### Local State (Default)
+By default, Terraform will store state locally. This is suitable for testing and development.
+
+### AWS S3 Backend (Optional)
+To use AWS S3 for state storage:
+
+1. Create an S3 bucket and DynamoDB table:
+```bash
+# Create S3 bucket
+aws s3api create-bucket \
+    --bucket your-terraform-state-bucket \
+    --region us-west-2 \
+    --create-bucket-configuration LocationConstraint=us-west-2
+
+# Enable versioning
+aws s3api put-bucket-versioning \
+    --bucket your-terraform-state-bucket \
+    --versioning-configuration Status=Enabled
+
+# Create DynamoDB table for state locking
+aws dynamodb create-table \
+    --table-name terraform-state-lock \
+    --attribute-definitions AttributeName=LockID,AttributeType=S \
+    --key-schema AttributeName=LockID,KeyType=HASH \
+    --billing-mode PAY_PER_REQUEST
+```
+
+2. Create a backend configuration file (backend.tf):
+```hcl
+terraform {
+  backend "s3" {
+    bucket         = "your-terraform-state-bucket"
+    key            = "terraform.tfstate"
+    region         = "us-west-2"
+    encrypt        = true
+    use_lockfile   = true
+  }
+}
+```
+
+### Azure Storage Backend (Optional)
+To use Azure Storage for state storage:
+
+1. Create Azure Storage Account and Container:
+```bash
+# Create Resource Group
+az group create --name terraform-state-rg --location eastus
+
+# Create Storage Account
+az storage account create \
+    --name yourterraformstate \
+    --resource-group terraform-state-rg \
+    --location eastus \
+    --sku Standard_LRS
+
+# Create Container
+az storage container create \
+    --name tfstate \
+    --account-name yourterraformstate
+```
+
+2. Create a backend configuration file (backend.tf):
+```hcl
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "terraform-state-rg"
+    storage_account_name = "yourterraformstate"
+    container_name       = "tfstate"
+    key                 = "terraform.tfstate"
+  }
+}
+```
+
+### Authentication
+- For AWS: Configure credentials using environment variables or AWS CLI (`aws configure`)
+- For Azure: Log in using Azure CLI (`az login`)
+
+## Recent Infrastructure Improvements
+
+### Security Enhancements
+- Added TLS 1.2 enforcement for Azure Storage accounts
+- Implemented IP-based access restrictions for state storage
+- Added security group configurations for AWS networking
+- Enhanced encryption for S3 state storage
+- Added state storage access logging
+
+### State Management
+- Implemented Terragrunt for better state management
+- Added state bucket logging and monitoring
+- Prevented accidental state storage deletion
+- Added workspace-based state organization
+- Improved state locking mechanisms
+
+### Infrastructure Resilience
+- Added container health monitoring
+  - Readiness probes for Azure containers
+  - Health check endpoints
+  - Monitoring integration
+- Implemented lifecycle management
+  - Create before destroy for security groups
+  - Prevent destroy for critical components
+  - Resource dependency management
+
+### Resource Organization
+- Fixed resource group references
+- Improved resource naming consistency
+- Enhanced tag management
+- Added environment validation
+- Standardized container registry validation
+
+### Variable Management
+- Added input validation for all critical variables
+- Implemented environment-specific configurations
+- Enhanced cost center tracking
+- Added owner validation
+
+## Updated Deployment Methods 
+
+### Terragrunt Usage
+```hcl
+# Initialize and plan with Terragrunt
+terragrunt init
+terragrunt plan
+
+# Apply changes using workspace
+terragrunt apply
+```
+
+### Environment Variables
+Required environment variables for deployment:
+```bash
+export TF_VAR_environment="prod"
+export TF_VAR_cost_center="your-cost-center"
+export TF_VAR_owner="your-team"
+```
+
 ## Testing Infrastructure
 
 ### Terratest Implementation
@@ -228,3 +366,41 @@ go test -v ./...
 - Ensures tag compliance
 - Verifies cross-cloud connectivity
 - Results posted as PR comments
+
+## Future Improvements
+
+### Infrastructure Enhancements
+- Implement consistent resource naming strategy using `{prefix}-{environment}-{resource-type}-{instance}`
+- Add multi-region support with region-specific CIDR mappings
+- Enhance security with KMS encryption for sensitive resources
+- Implement comprehensive network security controls
+
+### Monitoring & Observability
+- Add Datadog Monitoring & Observability
+- Implement container health checks
+- Set up metric alerting for resource utilization
+- Configure log retention policies
+
+### Security
+
+- Enable Guardduty
+- Send CloudTrail & Guarduty logs to Datadog SIEM 
+
+
+### Cost Management
+- Implement mandatory cost allocation tags
+- Set up budget monitoring and alerts
+- Configure cost center tracking
+- Add billing ID tags for charge-back
+
+### Disaster Recovery
+- Implement automated backup plans
+- Configure recovery services vaults
+- Set up cross-region replication where needed
+- Define backup retention policies
+
+### CI/CD Improvements
+- Add workspace validation in CI pipeline
+- Implement pre-commit hooks
+- Enhance pipeline security checks
+- Add drift detection

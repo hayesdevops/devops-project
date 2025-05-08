@@ -32,6 +32,16 @@ resource "azurerm_container_group" "this" {
       initial_delay_seconds = 30
       period_seconds        = 10
     }
+
+    readiness_probe {
+      http_get {
+        path   = "/ready"
+        port   = var.container_port
+        scheme = "Http"
+      }
+      initial_delay_seconds = 20
+      period_seconds        = 10
+    }
   }
 
   tags = local.common_tags
