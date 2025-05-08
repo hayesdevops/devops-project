@@ -12,7 +12,17 @@ across cloud providers.
 modules/
 ├── base/
 │   ├── container/
-│   └── networking/
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── monitoring/
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── networking/
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── tags/
+│       ├── variables.tf
+│       └── outputs.tf
 ├── aws/
 │   ├── container/
 │   └── networking/
@@ -20,6 +30,32 @@ modules/
     ├── container/
     └── networking/
 ```
+
+## Base Modules Overview
+
+### Tags Module
+- Centralized tag management
+- Provider-specific validation
+- Standard tag enforcement
+- Automatic timestamp management
+
+### Monitoring Module
+- Cross-cloud metrics configuration
+- Standardized alert definitions
+- Log retention policies
+- Common monitoring interfaces
+
+### Networking Module
+- Shared networking variables
+- Cross-cloud connectivity definitions
+- Common subnet structures
+- Network tier validation
+
+### Container Module
+- Standard container definitions
+- Resource allocation templates
+- Common deployment patterns
+- Service configuration baseline
 
 ## AWS Modules Design Decisions and changes
 
@@ -85,6 +121,26 @@ All resources must include these tags:
 - Networking resources: Include `NetworkTier`
 - Container resources: Include `ApplicationName` and `ServiceTier`
 
+### Tag Validation
+- AWS tags must match pattern: ^[a-zA-Z0-9+\-=._:/@]+$
+- Azure tags must match pattern: ^[a-zA-Z0-9+\-=._:/@]+$
+- Tag validation is enforced through the base tags module
+- Cloud provider-specific validation through regex patterns
+
+### Base Modules Design
+
+#### Tags Module
+- Centralized tag management
+- Cloud provider-specific validation
+- Required tags enforcement:
+  - Environment
+  - CostCenter
+  - Owner
+  - ManagedBy
+  - LastModified
+- Supports additional custom tags
+- Provider-specific tag format validation
+
 ## Deployment Methods 
 
 ### Manual Deployment
@@ -133,3 +189,42 @@ Required Secrets:
 - AZURE_CREDENTIALS: Azure service principal
 - AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY: AWS credentials
 - AZURE_CLIENT_ID/SECRET/SUBSCRIPTION_ID/TENANT_ID: Azure auth
+
+## Testing Infrastructure
+
+### Terratest Implementation
+Tests are located in the `/test` directory and validate:
+- VPC/VNET creation and configuration
+- Subnet allocation and routing
+- Container service deployment
+- Cross-cloud connectivity
+- Resource tagging compliance
+
+### Terratest Configuration
+- Located in `/test` directory
+- Requires Go 1.20+
+- Uses Terratest modules for AWS and Azure
+- Supports parallel test execution
+- Automated cleanup after tests
+
+### Test Prerequisites
+- Valid AWS credentials with required permissions
+- Valid Azure service principal
+- Go environment configured
+- Required environment variables set
+- Terraform binary in PATH
+
+For detailed setup instructions and examples, see [Test README](./test/README.md)
+
+### Running Tests Locally
+```bash
+cd test
+go test -v ./...
+```
+
+### CI/CD Integration
+- Tests run automatically on pull requests
+- Validates infrastructure changes
+- Ensures tag compliance
+- Verifies cross-cloud connectivity
+- Results posted as PR comments
