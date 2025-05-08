@@ -1,12 +1,4 @@
-provider "aws" {
-  region = var.aws_region
-}
 
-provider "azurerm" {
-  features {}
-}
-
-# AWS Backend Resources
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.state_bucket_name
 
