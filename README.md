@@ -2,11 +2,24 @@
 
 ## Summary of Approach
 
- Applied Terraform best practices by removing hard-coded values in favor of reusable variables,
- adding missing resources to ensure infrastructure completeness,
- and restructuring the file layout for improved clarity and maintainability. 
- These updates enhanced the module’s scalability, readability, and long-term manageability across environments.
+Applied Terraform best practices by implementing a modular design with shared base modules,
+removing duplication between cloud providers, and maintaining provider-specific implementations
+where necessary. This approach improves maintainability and ensures consistent resource configuration
+across cloud providers.
 
+## Module Structure
+```
+modules/
+├── base/
+│   ├── container/
+│   └── networking/
+├── aws/
+│   ├── container/
+│   └── networking/
+└── azure/
+    ├── container/
+    └── networking/
+```
 
 ## AWS Modules Design Decisions and changes
 
@@ -57,6 +70,20 @@
   - prevent_destroy where needed
   - Proper RBAC integration
   - Resource validation
+
+## Resource Tagging Standards
+
+### Required Tags
+All resources must include these tags:
+- `Environment` - (dev/staging/prod)
+- `CostCenter` - Department/Project code
+- `Owner` - Team responsible
+- `ManagedBy` - "terraform"
+- `LastModified` - Timestamp of last change
+
+### Module-specific Tags
+- Networking resources: Include `NetworkTier`
+- Container resources: Include `ApplicationName` and `ServiceTier`
 
 ## Deployment Methods 
 

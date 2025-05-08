@@ -1,11 +1,17 @@
 # Azure Container Module
-# Deploys a containerized application on Azure Container Instances (ACI) with VNET integration.
-
+module "tags" {
+  source         = "../../base/tags"
+  environment    = var.environment
+  cost_center    = var.cost_center
+  owner          = var.owner
+  cloud_provider = "azure"
+}
 
 locals {
-  common_tags = {
-    environment = var.environment
-    terraform   = "true"
-    module      = "azure_container"
-  }
+  common_tags = merge(
+    module.tags.tags,
+    {
+      Module = "azure_container"
+    }
+  )
 }

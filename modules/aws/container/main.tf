@@ -1,10 +1,17 @@
 # AWS Container Module
-# This module deploys a containerized application on AWS using Amazon ECS with Fargate launch type by default
+module "tags" {
+  source         = "../../base/tags"
+  environment    = var.environment
+  cost_center    = var.cost_center
+  owner          = var.owner
+  cloud_provider = "aws"
+}
 
 locals {
-  common_tags = {
-    Environment = var.environment
-    Terraform   = "true"
-    Module      = "aws_container"
-  }
+  common_tags = merge(
+    module.tags.tags,
+    {
+      Module = "aws_container"
+    }
+  )
 }

@@ -1,4 +1,3 @@
-
 # Deploy AWS Shared Services Network
 module "aws_shared_network" {
   source = "./modules/aws/networking"
@@ -12,6 +11,8 @@ module "aws_shared_network" {
   private_subnet_cidr = "10.0.2.0/24"
   availability_zone   = "us-west-2a"
   amazon_side_asn     = 64512
+  cost_center         = var.cost_center
+  owner               = var.owner
 }
 
 # Deploy AWS Production Network
@@ -26,6 +27,8 @@ module "aws_prod_network" {
   private_subnet_cidr = "10.1.2.0/24"
   availability_zone   = "us-west-2a"
   transit_gateway_id  = module.aws_shared_network.transit_gateway_id
+  cost_center         = var.cost_center
+  owner               = var.owner
 }
 
 # Deploy Azure Network
@@ -48,11 +51,15 @@ module "aws_container" {
     aws = aws.prod
   }
 
-  subnet_ids = module.aws_prod_network.private_subnet_id
+  subnet_ids   = module.aws_prod_network.private_subnet_id
+  cost_center  = var.cost_center
+  owner        = var.owner
 }
 
 # Deploy Azure Container
 module "azure_container" {
   source              = "./modules/azure/container"
   container_subnet_id = module.azure_network.container_subnet_id
+  cost_center         = var.cost_center
+  owner               = var.owner
 }

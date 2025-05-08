@@ -47,3 +47,13 @@ variable "create_vpn_endpoint" {
   type        = bool
   default     = true
 }
+
+variable "cost_center" {
+  type        = string
+  description = "Cost center for billing purposes"
+}
+
+variable "owner" {
+  type        = string
+  description = "Team/Individual responsible for the resource"
+}

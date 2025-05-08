@@ -68,3 +68,13 @@ variable "log_analytics_workspace_id" {
   type        = string
   default     = null
 }
+
+variable "cost_center" {
+  description = "Cost center for billing purposes"
+  type        = string
+}
+
+variable "owner" {
+  description = "Team/Individual responsible for the resource"
+  type        = string
+}

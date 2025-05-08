@@ -10,11 +10,20 @@
 # through the transit_gateway_id variable. All resources are tagged with
 # environment and terraform management tags.
 
+module "tags" {
+  source         = "../../base/tags"
+  environment    = var.environment
+  cost_center    = var.cost_center
+  owner          = var.owner
+  cloud_provider = "aws"
+}
+
 locals {
   tgw_id = var.create_transit_gateway ? aws_ec2_transit_gateway.this[0].id : var.transit_gateway_id
-  common_tags = {
-    Environment = var.environment
-    Terraform   = "true"
-    Module      = "aws_networking"
-  }
+  common_tags = merge(
+    module.tags.tags,
+    {
+      Module = "aws_networking"
+    }
+  )
 }

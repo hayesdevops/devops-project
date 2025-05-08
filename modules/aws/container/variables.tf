@@ -89,3 +89,13 @@ variable "task_memory" {
   default     = "512"
 }
 
+variable "cost_center" {
+  type        = string
+  description = "Cost center for billing purposes"
+}
+
+variable "owner" {
+  type        = string
+  description = "Team/Individual responsible for the resource"
+}
+
