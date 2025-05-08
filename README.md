@@ -85,7 +85,7 @@ modules/
   - Multi-subnet support
   - Public IP assignment toggle
 
-## Azure Modules
+## Azure Modules Design Decisions and changes
 
 ### Container Module
 - Resource Management:
