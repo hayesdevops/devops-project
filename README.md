@@ -1,6 +1,6 @@
 # Infrastructure Changes Overview
 
-##Summary of Approach
+## Summary of Approach
 
  Applied Terraform best practices by removing hard-coded values in favor of reusable variables,
  adding missing resources to ensure infrastructure completeness,
