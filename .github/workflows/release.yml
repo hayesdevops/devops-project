@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
   issues: write
+  id-token: write 
 
 jobs:
   validate:
@@ -20,6 +21,18 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: "1.5.0"
+          terraform_wrapper: false 
+
+      - name: Configure AWS Credentials 
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - name: Configure Azure Credentials 
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
         run: terraform init -backend=false
@@ -50,11 +63,14 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.0"
+          terraform_wrapper: false
         
       - name: Deploy Shared Infrastructure
         run: |
           terraform init
-          terraform workspace select shared
+          terraform workspace new shared || terraform workspace select shared
           terraform apply -auto-approve -target=module.aws_shared_network
 
   deploy-prod:
@@ -78,11 +94,14 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.0"
+          terraform_wrapper: false
         
       - name: Deploy Production Infrastructure
         run: |
           terraform init
-          terraform workspace select prod
+          terraform workspace new prod || terraform workspace select prod
           terraform apply -auto-approve
 
       - name: Verify Deployment
@@ -121,5 +140,4 @@ jobs:
               body: summary,
               labels: ['deployment']
             });
-```
 

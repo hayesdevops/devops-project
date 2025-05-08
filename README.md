@@ -166,33 +166,64 @@ Environment configuration:
 
 ## GitHub Actions Workflows
 
+### Required Secrets
+The following secrets must be configured in your GitHub repository:
+
+- `AWS_ACCESS_KEY_ID`: AWS access key for testing
+- `AWS_SECRET_ACCESS_KEY`: AWS secret key for testing
+- `AWS_ROLE_ARN`: AWS IAM role ARN for deployments
+- `AZURE_CREDENTIALS`: Azure service principal credentials JSON
+- `GITHUB_TOKEN`: Automatically provided by GitHub
+
+### Environment Configuration
+Two environments must be configured in GitHub:
+- `shared`: For shared services deployment
+- `production`: For production deployment
+
+Each environment should have protection rules and required reviewers configured.
+
 ### Pull Request (PR) Workflow
-Automatically runs when PRs are opened/updated against main branch:
-- Terraform format checking
-- TFLint static analysis
-- Configuration validation
-- Security scanning with Checkov
-- Infrastructure plan generation
-- Posts results as PR comment
+Triggers when PRs are opened/updated against main branch and:
+- Validates Terraform formatting
+- Runs TFLint analysis
+- Validates configurations
+- Performs security scanning with Checkov
+- Generates infrastructure plan
+- Runs Terratest suite
+- Posts results as PR comments
+
+The workflow requires:
+- AWS credentials for testing
+- Azure service principal for testing
+- Go 1.20+ for Terratest
+- Terraform 1.5.0+
 
 ### Release Workflow
-Triggers on new release publication:
+Triggers on release publication and follows this process:
+
 1. Validation Stage:
    - Configuration validation
-   - Security scanning
+   - Security scanning with Checkov
+   - Requires both AWS and Azure credentials
+
 2. Shared Services Stage:
+   - Uses OIDC for AWS authentication
+   - Creates/selects 'shared' workspace
    - Deploys network infrastructure
    - Requires environment approval
-3. Production Stage:
-   - Deploys AWS/Azure resources
-   - Creates deployment summary
-   - Generates documentation
 
-Required Secrets:
-- AWS_ROLE_ARN: AWS IAM role for deployments
-- AZURE_CREDENTIALS: Azure service principal
-- AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY: AWS credentials
-- AZURE_CLIENT_ID/SECRET/SUBSCRIPTION_ID/TENANT_ID: Azure auth
+3. Production Stage:
+   - Depends on shared services completion
+   - Creates/selects 'prod' workspace
+   - Deploys all infrastructure
+   - Generates deployment summary
+   - Creates GitHub issue with results
+
+The release workflow requires:
+- AWS OIDC role configuration
+- Azure service principal with proper permissions
+- Environment approvals configured
+- Workspace management permissions
 
 ## State Management
 
