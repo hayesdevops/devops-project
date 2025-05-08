@@ -7,6 +7,10 @@ removing duplication between cloud providers, and maintaining provider-specific 
 where necessary. This approach improves maintainability and ensures consistent resource configuration
 across cloud providers.
 
+## High Level System Design Arch
+
+![Architecture Diagram](images/architecture.png)
+
 ## Module Structure
 ```
 modules/
@@ -268,6 +272,65 @@ terraform {
 ### Authentication
 - For AWS: Configure credentials using environment variables or AWS CLI (`aws configure`)
 - For Azure: Log in using Azure CLI (`az login`)
+
+## Environment Configuration
+
+### Environment Variable Rules
+```hcl
+environment = "dev|staging|prod|shared"  # Required deployment environment
+cost_center = string                     # Required cost center code
+owner       = string                     # Required resource owner
+```
+
+### Validation Rules
+- Environment must be one of: dev, staging, prod, shared
+- Cost center must not be empty
+- Owner must not be empty
+- Container registry must match pattern: ^[a-zA-Z0-9][a-zA-Z0-9-_./]*$
+- Network tier must be one of: public, private, data
+- Service tier must be one of: frontend, backend, data
+
+### Default Values
+```hcl
+environment = "prod"
+cost_center = "devops-infrastructure"
+owner       = "platform-team"
+```
+
+## Cross-Cloud Networking
+
+### AWS Configuration
+- VPC CIDR: 10.0.0.0/16 (shared), 10.1.0.0/16 (prod)
+- Public Subnet: 10.x.1.0/24
+- Private Subnet: 10.x.2.0/24
+- Transit Gateway ASN: 64512
+
+### Azure Configuration
+- VNET Address Space: 172.16.0.0/16
+- Container Subnet: 172.16.1.0/24
+- Transit Subnet: 172.16.2.0/24
+- VPN Client Pool: 172.17.0.0/24
+
+### Connectivity
+- Site-to-Site VPN between AWS Transit Gateway and Azure VPN Gateway
+- Private connectivity for container workloads
+- Shared services VPC acts as transit hub
+
+## Container Services
+
+### AWS ECS Configuration
+- Launch Type: FARGATE
+- Network Mode: awsvpc
+- Default CPU: 256 (.25 vCPU)
+- Default Memory: 512 MiB
+
+### Azure Container Instances
+- Default CPU: 0.5 cores
+- Default Memory: 1.0 GB
+- Network Type: Private
+- Health Monitoring: 
+  - Liveness Probe: /health
+  - Readiness Probe: /ready
 
 ## Recent Infrastructure Improvements
 
